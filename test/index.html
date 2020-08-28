@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <script>
+            let socket = new WebSocket("ws://localhost:8080/chat");
+            let token = "12345678";
+
+            socket.onopen = function(e) {
+                socket.send(JSON.stringify({
+                    Name: "Igor",
+                    Email: "igorok@nameless.com",
+                    Token: token
+                }));
+            };
+
+            function send() {
+                let text = document.getElementById("text").value;
+                socket.send(text)
+            }
+
+            socket.onmessage = function(e) {
+                console.log("data from server: " + e.data);
+            };
+            
+            socket.onerror = function(e) {
+                console.log("GG: " + e.message);
+            };
+        </script>
+    </head>
+    <body>
+        <input type="text" id="text">
+        <button type="button" onclick="send();">send</button>
+    </body>
+</html>
