@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
@@ -20,9 +22,12 @@ func handler() {
 	http.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
 		ws := websoket.NewWebSocket(h)
 		var clientInfo hub.ClientInfo
-		body := NewRequestReader(r)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Println("Request error: ", err)
+		}
 		json.Unmarshal(body, &clientInfo)
-		err := ws.RunWebSocket(&models.WebSocketConfig{
+		err = ws.RunWebSocket(&models.WebSocketConfig{
 			Response: w,
 			Request:  *r,
 			Token:    "12345678",
@@ -34,7 +39,12 @@ func handler() {
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 		}
-		NewResponseWriter(b, w)
+		// NewResponseWriter(b, w)
+		w.Header().Set("Content-Type", "application/json")
+		_, err = w.Write(b)
+		if err != nil {
+			log.Println(err)
+		}
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")

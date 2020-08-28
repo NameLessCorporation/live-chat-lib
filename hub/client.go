@@ -25,9 +25,9 @@ type Client struct {
 
 // ClientInfo ...
 type ClientInfo struct {
-	Name  string
-	Email string
-	Token string
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
 }
 
 // Writer ...
