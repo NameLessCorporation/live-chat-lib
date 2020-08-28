@@ -57,5 +57,7 @@ func (ws *WebSocket) RunWebSocket(wsConfig *models.WebSocketConfig, clientInfo *
 	if err != nil {
 		return err
 	}
+	go client.Writer()
+	go client.Reader()
 	return nil
 }

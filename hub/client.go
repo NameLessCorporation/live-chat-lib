@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"bytes"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -68,6 +69,30 @@ func (client *Client) Writer() error {
 }
 
 // Reader ...
-func (client *Client) Reader() {
-
+func (client *Client) Reader() error {
+	defer func() {
+		client.Hub.Unregister <- client
+		client.Connection.Close()
+	}()
+	client.Connection.SetReadLimit(maxMessageSize)
+	client.Connection.SetReadDeadline(time.Now().Add(pongWait))
+	client.Connection.SetPongHandler(func(string) error {
+		err := client.Connection.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	for {
+		_, message, err := client.Connection.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				return err
+			}
+			break
+		}
+		message = bytes.TrimSpace(bytes.Replace(message, []byte{'\n'}, []byte{' '}, -1))
+		client.Hub.Broadcast <- message
+	}
+	return nil
 }
