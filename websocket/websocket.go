@@ -20,52 +20,42 @@ var upgrader = websocket.Upgrader{
 }
 
 // NewWebSocket ...
-func NewWebSocket() *WebSocket {
+func NewWebSocket(hub *hub.Hub) *WebSocket {
 	return &WebSocket{
 		Upgrader: &upgrader,
-		Hub:      hub.NewHub(),
+		Hub:      hub,
 	}
 }
 
 // RunWebSocket ...
-func (ws *WebSocket) RunWebSocket(wsConfig *models.WebSoketConfig, clientInfo *models.ClientInfo) error {
+func (ws *WebSocket) RunWebSocket(wsConfig *models.WebSocketConfig, clientInfo *hub.ClientInfo) error {
 	ws.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	websocket, err := ws.Upgrader.Upgrade(wsConfig.Response, &wsConfig.Request, nil)
 	if err != nil {
 		return err
 	}
-	client := &models.Client{
+	client := &hub.Client{
 		Hub:        ws.Hub,
 		Connection: websocket,
 		Send:       make(chan []byte, 1024),
-		ClientInfo: &models.ClientInfo{
+		ClientInfo: &hub.ClientInfo{
 			Name:  clientInfo.Name,
 			Email: clientInfo.Email,
 		},
-		Token: wsConfig.Token,
+		Token: clientInfo.Token,
 	}
-	err = ws.Reader(websocket)
+	room := &models.Room{
+		Token: wsConfig.Token,
+		Hub:   ws.Hub,
+	}
+	if client.Token == room.Token {
+		room.Hub.Register <- client
+	} else {
+		websocket.WriteMessage(1, []byte("Token is incorrect"))
+		websocket.Close()
+	}
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-// Reader ...
-func (ws *WebSocket) Reader(conn *websocket.Conn) error {
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			return err
-		}
-		err = conn.WriteMessage(messageType, p)
-		if err != nil {
-			return err
-		}
-	}
-}
-
-// Writer ...
-func (ws *WebSocket) Writer(conn *websocket.Conn) {
-
 }

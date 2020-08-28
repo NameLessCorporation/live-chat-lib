@@ -1,9 +1,11 @@
 package models
 
-import "github.com/NameLessCorporation/live-chat-lib/models"
+import (
+	"github.com/NameLessCorporation/live-chat-lib/hub"
+)
 
 // Room ...
 type Room struct {
-	Token   string
-	Clients []*models.Client
+	Token string
+	Hub   *hub.Hub
 }
