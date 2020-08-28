@@ -1,0 +1,4 @@
+github.com/NameLessCorporation/live-chat-lib v0.0.0-20200828092620-6e099e93cdd6 h1:3Nw6e9YM1xKkhZj3Idaw+7DRPwpFMMznk5qVYF/uh7Q=
+github.com/NameLessCorporation/live-chat-lib v0.0.0-20200828092620-6e099e93cdd6/go.mod h1:4p6ACm0zm/pfy8mPmVwbmRRS0AU7gva1b2LpDgqMjkM=
+github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
+github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
