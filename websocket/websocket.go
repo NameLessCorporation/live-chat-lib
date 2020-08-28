@@ -1,6 +1,7 @@
 package websoket
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
@@ -49,6 +50,8 @@ func (ws *WebSocket) RunWebSocket(wsConfig *models.WebSocketConfig, clientInfo *
 		Hub:   ws.Hub,
 	}
 	if client.Token == room.Token {
+		log.Println("Connect")
+		websocket.WriteMessage(1, []byte("Connect"))
 		room.Hub.Register <- client
 	} else {
 		websocket.WriteMessage(1, []byte("Token is incorrect"))
