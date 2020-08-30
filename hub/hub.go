@@ -2,20 +2,21 @@ package hub
 
 // Hub ...
 type Hub struct {
-	Clients     map[*Client]bool
-	Broadcast   chan []byte
-	Register    chan *Client
-	Unregister  chan *Client
-	ClientsInfo chan *ClientInfo
+	Buffer     []byte
+	Clients    map[*Client]bool
+	Broadcast  chan []byte
+	Register   chan *Client
+	Unregister chan *Client
 }
 
 // NewHub ...
 func NewHub() *Hub {
 	return &Hub{
+		Buffer:     make([]byte, 1024),
+		Clients:    make(map[*Client]bool),
 		Broadcast:  make(chan []byte),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		Clients:    make(map[*Client]bool),
 	}
 }
 
@@ -24,7 +25,6 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.Register:
-			h.ClientsInfo <- client.ClientInfo
 			h.Clients[client] = true
 		case client := <-h.Unregister:
 			if _, ok := h.Clients[client]; ok {
