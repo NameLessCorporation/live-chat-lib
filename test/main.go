@@ -8,6 +8,7 @@ import (
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
 	models "github.com/NameLessCorporation/live-chat-lib/models"
+	websocket "github.com/NameLessCorporation/live-chat-lib/websocket"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func handler() {
 	go h.Run()
 	var clientInfo hub.ClientInfo
 	http.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
-		ws := websoket.NewWebSocket(h)
+		ws := websocket.NewWebSocket(h)
 		ws.RunWebSocket(&models.WebSocketConfig{
 			Response: w,
 			Request:  *r,
