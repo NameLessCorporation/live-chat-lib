@@ -1,12 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
-	"github.com/NameLessCorporation/live-chat-lib/models"
-	websoket "github.com/NameLessCorporation/live-chat-lib/websocket"
+	models "github.com/NameLessCorporation/live-chat-lib/models"
 )
 
 func main() {
@@ -17,23 +18,23 @@ func main() {
 func handler() {
 	h := hub.NewHub()
 	go h.Run()
+	var clientInfo hub.ClientInfo
 	http.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
 		ws := websoket.NewWebSocket(h)
-		clientInfo := hub.ClientInfo{
-			Name:  "Igor",
-			Email: "dfdfd",
-			Token: "12345678",
-		}
-		err := ws.RunWebSocket(&models.WebSocketConfig{
+		ws.RunWebSocket(&models.WebSocketConfig{
 			Response: w,
 			Request:  *r,
 			Token:    "12345678",
 		}, &clientInfo)
-		if err != nil {
-			log.Println(err)
-		}
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
+	})
+	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Println("Request error: ", err)
+		}
+		json.Unmarshal(body, &clientInfo)
 	})
 }
