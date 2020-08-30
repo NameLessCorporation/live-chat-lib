@@ -1,7 +1,6 @@
 package websoket
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
@@ -42,25 +41,22 @@ func (ws *WebSocket) RunWebSocket(wsConfig *models.WebSocketConfig, clientInfo *
 		ClientInfo: &hub.ClientInfo{
 			Name:  clientInfo.Name,
 			Email: clientInfo.Email,
+			Token: clientInfo.Token,
 		},
-		Token: clientInfo.Token,
 	}
 	room := &models.Room{
-		Token: wsConfig.Token,
-		Hub:   ws.Hub,
+		Token:   wsConfig.Token,
+		Clients: nil,
+		Hub:     ws.Hub,
 	}
-	if client.Token == room.Token {
-		log.Println("Connect")
-		websocket.WriteMessage(1, []byte("Connect"))
+	if client.ClientInfo.Token == room.Token {
 		room.Hub.Register <- client
+		room.Clients = append(room.Clients, client)
+		client.Connection.WriteMessage(1, room.Hub.Buffer)
 	} else {
-		websocket.WriteMessage(1, []byte("Token is incorrect"))
 		websocket.Close()
 	}
-	if err != nil {
-		return err
-	}
-	go client.Writer()
-	go client.Reader()
+	go room.Writer(client)
+	go room.Reader(client)
 	return nil
 }
