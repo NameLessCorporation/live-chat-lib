@@ -3,15 +3,12 @@ package models
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
+	"github.com/gorilla/websocket"
 )
 
 const (
-	writeWait      = 10 * time.Second
-	pongWait       = 15 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
 	maxMessageSize = 1024
 )
 
@@ -28,7 +25,11 @@ func (room *Room) Writer(client *hub.Client) error {
 		client.Connection.Close()
 	}()
 	for {
-		data := <-client.Send
+		data, ok := <-client.Send
+		if !ok {
+			client.Connection.WriteMessage(websocket.CloseMessage, []byte{})
+			return nil
+		}
 		client.Connection.WriteMessage(1, data)
 	}
 }
