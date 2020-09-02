@@ -5,15 +5,14 @@
   					return this[Math.floor(Math.random()*this.length)];
 				}
 				let names = ["Igor", "Dima", "Danil", "Leonid", "Lev", "Liza", "Katya", "Sasha", "Lesha", "Andrey", "Nikita"];
-				let token = "12345678";
-
+				let token = prompt("Token:")
 				let body = JSON.stringify({
 					name:  names.sample(),
-					email: "igorok@nameless.com",
+					email: "test@nameless.com",
 					token: token
 				})
 				let xhr = new XMLHttpRequest();
-				xhr.open("POST", "/get", true);
+				xhr.open("POST", "/join", true);
 				xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				xhr.send(body);
 
