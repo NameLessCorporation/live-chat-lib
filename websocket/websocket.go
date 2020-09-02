@@ -1,6 +1,7 @@
 package websoket
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/NameLessCorporation/live-chat-lib/hub"
@@ -11,7 +12,8 @@ import (
 // WebSocket ...
 type WebSocket struct {
 	Upgrader *websocket.Upgrader
-	Hub      *hub.Hub
+	Response http.ResponseWriter
+	Request  *http.Request
 }
 
 var upgrader = websocket.Upgrader{
@@ -20,43 +22,40 @@ var upgrader = websocket.Upgrader{
 }
 
 // NewWebSocket ...
-func NewWebSocket(hub *hub.Hub) *WebSocket {
+func NewWebSocket(w http.ResponseWriter, r *http.Request) *WebSocket {
 	return &WebSocket{
 		Upgrader: &upgrader,
-		Hub:      hub,
+		Response: w,
+		Request:  r,
 	}
 }
 
-// RunWebSocket ...
-func (ws *WebSocket) RunWebSocket(wsConfig *models.WebSocketConfig, clientInfo *hub.ClientInfo) error {
-	ws.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	websocket, err := ws.Upgrader.Upgrade(wsConfig.Response, &wsConfig.Request, nil)
-	if err != nil {
-		return err
+// ConnectionWebSocket ...
+func (ws *WebSocket) ConnectionWebSocket(clientInfo *hub.ClientInfo, rooms *models.Rooms) error {
+	for _, room := range rooms.Rooms {
+		if room.Token == clientInfo.Token {
+			conn, err := ws.Upgrader.Upgrade(ws.Response, ws.Request, nil)
+			if err != nil {
+				return err
+			}
+			client := &hub.Client{
+				Connection: conn,
+				Send:       make(chan []byte, 1024),
+				ClientInfo: &hub.ClientInfo{
+					Name:  clientInfo.Name,
+					Email: clientInfo.Email,
+					Token: clientInfo.Token,
+				},
+			}
+			room.Hub.Register <- client
+			room.Clients = append(room.Clients, client)
+			client.Connection.WriteMessage(1, room.Hub.Buffer)
+			for _, c := range room.Clients {
+				log.Println(c.ClientInfo.Name)
+			}
+			go room.Writer(client)
+			go room.Reader(client)
+		}
 	}
-	client := &hub.Client{
-		Hub:        ws.Hub,
-		Connection: websocket,
-		Send:       make(chan []byte, 1024),
-		ClientInfo: &hub.ClientInfo{
-			Name:  clientInfo.Name,
-			Email: clientInfo.Email,
-			Token: clientInfo.Token,
-		},
-	}
-	room := &models.Room{
-		Token:   wsConfig.Token,
-		Clients: nil,
-		Hub:     ws.Hub,
-	}
-	if client.ClientInfo.Token == room.Token {
-		room.Hub.Register <- client
-		room.Clients = append(room.Clients, client)
-		client.Connection.WriteMessage(1, room.Hub.Buffer)
-	} else {
-		websocket.Close()
-	}
-	go room.Writer(client)
-	go room.Reader(client)
 	return nil
 }

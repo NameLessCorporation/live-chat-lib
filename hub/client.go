@@ -6,7 +6,6 @@ import (
 
 // Client ...
 type Client struct {
-	Hub        *Hub
 	Connection *websocket.Conn
 	Send       chan []byte
 	ClientInfo *ClientInfo
